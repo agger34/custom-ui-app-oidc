@@ -140,12 +140,22 @@ lý. Đây chính là "share across OIDC apps".
 UI login gọi AM với `authIndexType=service&authIndexValue=<tree>` — tree này cần được thiết kế để
 chỉ trả về các loại callback mà UI login đã hỗ trợ render:
 
-- `NameCallback`, `PasswordCallback` — form đăng nhập username/password cơ bản.
+- `NameCallback`, `PasswordCallback` — form đăng nhập username/password cơ bản; cũng là callback
+  của node "OATH Token Verifier" (nhập OTP) và "Recovery Code Collector Decision" (nhập recovery
+  code).
 - `ChoiceCallback` — chọn 1 trong nhiều lựa chọn (ví dụ chọn phương thức MFA).
+- `ConfirmationCallback` — nút bấm dạng lựa chọn (vd node "OATH Token Verifier": "Submit OTP" /
+  "Dùng recovery code") — render thành các nút submit riêng, ẩn nút "Tiếp tục" mặc định.
 - `TextOutputCallback` — hiển thị thông báo do tree gửi xuống.
 - `HiddenValueCallback` — bỏ qua (không render).
 - `ReCaptchaCallback`, `ReCaptchaEnterpriseCallback` — node "reCAPTCHA"/"reCAPTCHA Enterprise"
   của AM (`RecaptchaField.tsx`: tự load script Google, render widget, gọi `setResult(token)`).
+- **QR code đăng ký OATH** (node "OATH Registration") — phát hiện qua
+  `QRCode.isQRCodeStep(step)`/`getQRCodeData(step)` (`@forgerock/journey-client/qr-code`),
+  render ảnh QR bằng thư viện `qrcode` (`QrCodeDisplay.tsx`).
+- **Hiển thị recovery code** (node "Recovery Code Display") — phát hiện qua
+  `RecoveryCodes.isDisplayStep(step)`/`getCodes(step)` (`@forgerock/journey-client/recovery-codes`)
+  (`RecoveryCodesDisplay.tsx`).
 
 Nếu tree cần thêm WebAuthn/SelectIdP/Push..., UI login cần được mở rộng thêm (class tương ứng đã
 có sẵn trong `@forgerock/journey-client`: `SelectIdPCallback`, ...) trước khi dùng các loại
