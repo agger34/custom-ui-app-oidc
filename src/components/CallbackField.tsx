@@ -6,8 +6,11 @@ import {
   ChoiceCallback,
   TextOutputCallback,
   HiddenValueCallback,
+  ReCaptchaCallback,
+  ReCaptchaEnterpriseCallback,
 } from '@forgerock/journey-client';
 import type { BaseCallback } from '@forgerock/journey-client';
+import { RecaptchaField, RecaptchaEnterpriseField } from './RecaptchaField';
 
 interface CallbackFieldProps {
   callback: BaseCallback;
@@ -22,9 +25,10 @@ const inputClasses =
  * Renders one AM authentication-tree callback as a form field.
  *
  * Covers the callback types needed by a simple username/password tree
- * (NameCallback, PasswordCallback) plus ChoiceCallback and TextOutputCallback.
- * Extend this switch to support additional callback types (WebAuthn, reCAPTCHA,
- * social IdP, etc.) as your tree design requires them.
+ * (NameCallback, PasswordCallback) plus ChoiceCallback, TextOutputCallback,
+ * and reCAPTCHA (classic + Enterprise). Extend this switch to support
+ * additional callback types (WebAuthn, social IdP, etc.) as your tree design
+ * requires them.
  */
 export function CallbackField({ callback, autoFocus }: CallbackFieldProps) {
   const [, forceRender] = useState(0);
@@ -91,6 +95,14 @@ export function CallbackField({ callback, autoFocus }: CallbackFieldProps) {
     return <p className="text-sm text-slate-600">{callback.getMessage()}</p>;
   }
 
+  if (callback instanceof ReCaptchaCallback) {
+    return <RecaptchaField callback={callback} />;
+  }
+
+  if (callback instanceof ReCaptchaEnterpriseCallback) {
+    return <RecaptchaEnterpriseField callback={callback} />;
+  }
+
   if (callback instanceof HiddenValueCallback) {
     // Pass-through callback (e.g. device profile token, WebAuthn payload).
     // Nothing to render; the tree step that produced it is responsible for
@@ -98,9 +110,9 @@ export function CallbackField({ callback, autoFocus }: CallbackFieldProps) {
     return null;
   }
 
-  // [Unverified] Generic fallback for callback types this renderer does not
-  // yet implement (e.g. WebAuthn, reCAPTCHA, SelectIdP, KBA). Wire these up
-  // explicitly if your tree uses them.
+  // Generic fallback for callback types this renderer does not yet implement
+  // (e.g. WebAuthn, SelectIdP, KBA). Wire these up explicitly if your tree
+  // uses them.
   return (
     <p className="rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-800">
       Loại callback chưa được hỗ trợ trong UI này: {callback.getType()}
@@ -115,4 +127,6 @@ export const SUPPORTED_CALLBACK_TYPES = [
   callbackType.ChoiceCallback,
   callbackType.TextOutputCallback,
   callbackType.HiddenValueCallback,
+  callbackType.ReCaptchaCallback,
+  callbackType.ReCaptchaEnterpriseCallback,
 ];

@@ -144,10 +144,12 @@ chỉ trả về các loại callback mà UI login đã hỗ trợ render:
 - `ChoiceCallback` — chọn 1 trong nhiều lựa chọn (ví dụ chọn phương thức MFA).
 - `TextOutputCallback` — hiển thị thông báo do tree gửi xuống.
 - `HiddenValueCallback` — bỏ qua (không render).
+- `ReCaptchaCallback`, `ReCaptchaEnterpriseCallback` — node "reCAPTCHA"/"reCAPTCHA Enterprise"
+  của AM (`RecaptchaField.tsx`: tự load script Google, render widget, gọi `setResult(token)`).
 
-Nếu tree cần thêm WebAuthn/reCAPTCHA/SelectIdP/Push..., UI login cần được mở rộng thêm (class
-tương ứng đã có sẵn trong `@forgerock/journey-client`: `SelectIdPCallback`, `ReCaptchaCallback`,
-...) trước khi dùng các loại callback đó.
+Nếu tree cần thêm WebAuthn/SelectIdP/Push..., UI login cần được mở rộng thêm (class tương ứng đã
+có sẵn trong `@forgerock/journey-client`: `SelectIdPCallback`, ...) trước khi dùng các loại
+callback đó.
 
 ### 1.6. Domain & cookie
 
