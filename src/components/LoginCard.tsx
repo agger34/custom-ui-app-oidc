@@ -1,5 +1,10 @@
 import { useEffect } from 'react';
+import { QRCode } from '@forgerock/journey-client/qr-code';
+import { RecoveryCodes } from '@forgerock/journey-client/recovery-codes';
+import { ConfirmationCallback, HiddenValueCallback, TextOutputCallback } from '@forgerock/journey-client';
 import { CallbackField } from './CallbackField';
+import { QrCodeDisplay } from './QrCodeDisplay';
+import { RecoveryCodesDisplay } from './RecoveryCodesDisplay';
 import { useJourneyLogin } from '../lib/useJourneyLogin';
 
 interface LoginCardProps {
@@ -58,6 +63,33 @@ export function LoginCard({ amBaseUrl, realmPath, tree, goto }: LoginCardProps) 
     );
   }
 
+  // AM's "OATH Registration" / "Recovery Code Display" nodes don't map to a
+  // single form field - they're a whole step (a QR code to scan, or a list
+  // of one-time codes to save). Detect those via the SDK's own step-level
+  // helpers and render a dedicated view instead of looping per-callback for
+  // the fields they carry (QRCode.isQRCodeStep / RecoveryCodes.isDisplayStep).
+  const isQrStep = step ? QRCode.isQRCodeStep(step) : false;
+  const qrData = step && isQrStep ? QRCode.getQRCodeData(step) : null;
+  const isRecoveryStep = step ? RecoveryCodes.isDisplayStep(step) : false;
+  const recoveryCodes = step && isRecoveryStep ? RecoveryCodes.getCodes(step) : null;
+  const recoveryDeviceName = step && isRecoveryStep ? RecoveryCodes.getDeviceName(step) : '';
+
+  // ConfirmationCallback renders its own submit buttons (see CallbackField) -
+  // the shared "Tiếp tục" button below would be a redundant, ambiguous
+  // second way to submit the same step, so hide it whenever one is present.
+  const hasConfirmation = step?.callbacks.some((cb) => cb instanceof ConfirmationCallback) ?? false;
+
+  const remainingCallbacks =
+    step?.callbacks.filter((callback) => {
+      if (isQrStep && (callback instanceof HiddenValueCallback || callback instanceof TextOutputCallback)) {
+        return false; // already shown via QrCodeDisplay
+      }
+      if (isRecoveryStep && callback instanceof TextOutputCallback) {
+        return false; // already shown via RecoveryCodesDisplay
+      }
+      return true;
+    }) ?? [];
+
   return (
     <Card>
       <h1 className="mb-6 text-xl font-semibold text-slate-900">Đăng nhập</h1>
@@ -73,17 +105,24 @@ export function LoginCard({ amBaseUrl, realmPath, tree, goto }: LoginCardProps) 
           void submit();
         }}
       >
-        {step?.callbacks.map((callback, idx) => (
+        {qrData && <QrCodeDisplay data={qrData} />}
+        {recoveryCodes && (
+          <RecoveryCodesDisplay codes={recoveryCodes} deviceName={recoveryDeviceName} />
+        )}
+
+        {remainingCallbacks.map((callback, idx) => (
           <CallbackField key={`${callback.getType()}-${idx}`} callback={callback} autoFocus={idx === 0} />
         ))}
 
-        <button
-          type="submit"
-          disabled={status === 'loading' || !step}
-          className="w-full rounded-lg bg-indigo-600 py-2 text-sm font-medium text-white hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {status === 'loading' ? 'Đang xử lý…' : 'Tiếp tục'}
-        </button>
+        {!hasConfirmation && (
+          <button
+            type="submit"
+            disabled={status === 'loading' || !step}
+            className="w-full rounded-lg bg-indigo-600 py-2 text-sm font-medium text-white hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {status === 'loading' ? 'Đang xử lý…' : 'Tiếp tục'}
+          </button>
+        )}
       </form>
 
       {/* Dev-only aid: never render session tokens in a production build. */}
