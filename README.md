@@ -156,6 +156,12 @@ chỉ trả về các loại callback mà UI login đã hỗ trợ render:
 - **Hiển thị recovery code** (node "Recovery Code Display") — phát hiện qua
   `RecoveryCodes.isDisplayStep(step)`/`getCodes(step)` (`@forgerock/journey-client/recovery-codes`)
   (`RecoveryCodesDisplay.tsx`).
+- **WebAuthn passwordless** (node "WebAuthn Authentication/Registration") — không có field để
+  điền, browser tự hiện hộp thoại vân tay/Face ID/khoá bảo mật. Phát hiện qua
+  `WebAuthn.getWebAuthnStepType(step)`, tự gọi `WebAuthn.authenticate(step)`/`register(step)`
+  (`@forgerock/journey-client/webauthn` — wrap `navigator.credentials.get/create`) rồi submit
+  ngay bất kể thành công hay thất bại, để tree tự route tiếp (vd fallback sang Password Collector
+  khi trình duyệt không hỗ trợ/chưa có device) (`WebAuthnStep.tsx`).
 
 Nếu tree cần thêm WebAuthn/SelectIdP/Push..., UI login cần được mở rộng thêm (class tương ứng đã
 có sẵn trong `@forgerock/journey-client`: `SelectIdPCallback`, ...) trước khi dùng các loại
