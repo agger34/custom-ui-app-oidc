@@ -1,10 +1,12 @@
 import { useEffect } from 'react';
 import { QRCode } from '@forgerock/journey-client/qr-code';
 import { RecoveryCodes } from '@forgerock/journey-client/recovery-codes';
+import { WebAuthn, WebAuthnStepType } from '@forgerock/journey-client/webauthn';
 import { ConfirmationCallback, HiddenValueCallback, TextOutputCallback } from '@forgerock/journey-client';
 import { CallbackField } from './CallbackField';
 import { QrCodeDisplay } from './QrCodeDisplay';
 import { RecoveryCodesDisplay } from './RecoveryCodesDisplay';
+import { WebAuthnStep } from './WebAuthnStep';
 import { useJourneyLogin } from '../lib/useJourneyLogin';
 
 interface LoginCardProps {
@@ -59,6 +61,19 @@ export function LoginCard({ amBaseUrl, realmPath, tree, goto }: LoginCardProps) 
         >
           Thử lại
         </button>
+      </Card>
+    );
+  }
+
+  // AM's "WebAuthn Authentication/Registration Node" steps carry no field to
+  // fill in - the browser's own WebAuthn dialog is the UI, triggered
+  // automatically. Render that instead of the normal form for this step.
+  const webAuthnStepType = step ? WebAuthn.getWebAuthnStepType(step) : WebAuthnStepType.None;
+  if (step && webAuthnStepType !== WebAuthnStepType.None) {
+    return (
+      <Card>
+        <h1 className="mb-2 text-xl font-semibold text-slate-900">Đăng nhập</h1>
+        <WebAuthnStep step={step} stepType={webAuthnStepType} onDone={() => void submit()} />
       </Card>
     );
   }
